@@ -60,7 +60,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:3000",
-    "https://your-frontend.vercel.app", // update after deploy
+    "https://expense-tracker-frontend-six-tau.vercel.app/", // update after deploy
   ],
   methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
