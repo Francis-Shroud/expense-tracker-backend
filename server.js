@@ -84,7 +84,7 @@ mongoose
 
 // ✅ Routes
 const expenseRoutes = require("./Routes/expenseRoutes");
-app.use("/api/expenses", expenseRoutes);
+app.use("/expenses", expenseRoutes);
 
 app.get("/", (req, res) => res.send("Expense Tracker API is running 🚀"));
 
