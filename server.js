@@ -66,7 +66,7 @@ const corsOptions = {
     "https://expense-tracker-frontend-sooty-rho.vercel.app", // update after deploy
   ],
   methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
