@@ -38,6 +38,9 @@
 // const expenseRoutes = require("./Routes/expenseRoutes"); 
 // app.use("/api/expenses", expenseRoutes);
 
+// const authRoutes = require("./Routes/authRoutes");
+// app.use("/api/auth", authRoutes);
+
 // // Simple health check route
 // app.get("/", (req, res) => {
 //     res.send("Expense Tracker API is running.");
@@ -85,6 +88,9 @@ mongoose
 // ✅ Routes
 const expenseRoutes = require("./Routes/expenseRoutes");
 app.use("/expenses", expenseRoutes);
+
+const authRoutes = require("./Routes/authRoutes");
+app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => res.send("Expense Tracker API is running 🚀"));
 

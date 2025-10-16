@@ -1,19 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const Expense = require("../Models/Expense.js");
+const authMiddleware = require("../Middleware/authMiddleware.js"); // ✅ Import middleware
 
-// GET all expenses
-router.get("/", async (req, res) => {
+// ✅ GET all expenses for the logged-in user
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ createdAt: -1 });
+    const expenses = await Expense.find({ user: req.user.id })
+      .sort({ createdAt: -1 });
     res.json(expenses);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error fetching expenses:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// ADD new expense
-router.post("/", async (req, res) => {
+// ✅ ADD new expense (linked to the logged-in user)
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, amount, category, createdAt } = req.body;
 
@@ -27,6 +30,7 @@ router.post("/", async (req, res) => {
       amount,
       category,
       createdAt: dateOnly,
+      user: req.user.id, // ✅ Link expense to the user
     });
 
     await expense.save();
@@ -37,39 +41,53 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE expense
-router.delete("/:id", async (req, res) => {
+// ✅ UPDATE expense (only if owned by the logged-in user)
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    await Expense.findByIdAndDelete(req.params.id);
-    res.json({ message: "Expense deleted" });
+    const { title, amount, category, createdAt } = req.body;
+
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+    // Check ownership
+    if (expense.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Update fields
+    if (title !== undefined) expense.title = title;
+    if (amount !== undefined) expense.amount = amount;
+    if (category !== undefined) expense.category = category;
+    if (createdAt) {
+      const dateOnly = new Date(createdAt);
+      dateOnly.setHours(0, 0, 0, 0);
+      expense.createdAt = dateOnly;
+    }
+
+    const updatedExpense = await expense.save();
+    res.json(updatedExpense);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error updating expense:", err);
+    res.status(500).json({ message: "Error updating expense" });
   }
 });
 
-// ✅ UPDATE expense (new)
-router.put("/:id", async (req, res) => {
+// ✅ DELETE expense (only if owned by the logged-in user)
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
-    const { title, amount, category, createdAt } = req.body;
-    //Build update object dynamically
-    const updateData = { title, amount, category };
-    if (createdAt) 
-      {
-        const dateOnly = new Date(createdAt);
-        dateOnly.setHours(0, 0, 0, 0); // Normalize to start of day
-        updateData.createdAt = dateOnly;
-      
-      }
-    const updatedExpense = await Expense.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) return res.status(404).json({ message: "Expense not found" });
 
-    res.json(updatedExpense);
+    // Check ownership
+    if (expense.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await expense.deleteOne();
+    res.json({ message: "Expense deleted" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error updating expense" });
+    console.error("Error deleting expense:", err);
+    res.status(500).json({ message: err.message });
   }
 });
 
